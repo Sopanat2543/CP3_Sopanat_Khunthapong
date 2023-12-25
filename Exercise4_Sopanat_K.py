@@ -1,1 +1,9 @@
-
+Found_Eng = float(input())
+Gener_Bs = float(input())
+Inter_Com_sys = float(input())
+Com_Pro = float(input())
+print("-------------- Your Score --------------")
+print("Foundation English               :",Found_Eng)
+print("General Business                 :",Gener_Bs)
+print("Introduction to Computer Systems :",Inter_Com_sys)
+print("Computer Programming             :",Com_Pro)
