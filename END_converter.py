@@ -1,7 +1,10 @@
 from tkinter import *
 from tkinter import ttk
+import yfinance
 from currency_converter import CurrencyConverter
 from datetime import date
+from plotly.subplots import make_subplots
+import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 import requests
 
@@ -75,7 +78,8 @@ def show_announcement():
 limited version of Twelve Data
 
 *********************************
-
+delay 15 min with Twelve Data
+---------------------------------
 800 API credits per day
 8 WS credits
 API key
@@ -88,6 +92,9 @@ Cryptocurrencies
 Reference data
 Technical indicators
 Basic fundamentals
+----------------------------------
+
+plot_stock_chart from yahoo finance
 
 *********************************
 
@@ -97,6 +104,38 @@ and the full power of our service"""
     # Display the announcement in the Text widget
     result_text.delete("1.0", END)
     result_text.insert(END, announcement_text)
+
+
+def plot_stock_chart():
+    stock_symbol = stock_entry.get()
+    fetch_data = yfinance.Ticker(stock_symbol)
+    hist = fetch_data.history(period='1y')
+
+    hist['diff'] = hist['Close'] - hist['Open']
+    hist.loc[hist['diff'] >= 0, 'color'] = 'green'
+    hist.loc[hist['diff'] < 0, 'color'] = 'red'
+
+    fig3 = make_subplots(specs=[[{"secondary_y": True}]])
+    fig3.add_trace(go.Candlestick(x=hist.index,
+                                  open=hist['Open'],
+                                  high=hist['High'],
+                                  low=hist['Low'],
+                                  close=hist['Close'],
+                                  name='Price'))
+    fig3.add_trace(go.Scatter(x=hist.index, y=hist['Close'].rolling(window=20).mean(), marker_color='blue', name='20 Day MA'))
+    fig3.add_trace(go.Bar(x=hist.index, y=hist['Volume'], name='Volume', marker={'color': hist['color']}), secondary_y=True)
+    fig3.update_yaxes(range=[0, 700000000], secondary_y=True)
+    fig3.update_yaxes(visible=False, secondary_y=True)
+    fig3.update_layout(xaxis_rangeslider_visible=False)  # hide range slider
+    fig3.update_layout(title={'text': f'{stock_symbol} Stock', 'x': 0.5})
+    fig3.show()
+
+    fig3.update_xaxes(rangebreaks=[
+        dict(bounds=['sat', 'mon']),  # hide weekends
+        dict(values=["2021-12-25", "2022-01-01"])  # hide Xmas and New Year
+    ])
+    fig3.write_html(f'C:\\Users\\jay\\Desktop\\PythonInOffice\\plotly_stock_chart\\{stock_symbol}_graph.html')
+
 
 # GUI setup
 main_window = Tk()
@@ -160,7 +199,7 @@ label_result_2.grid(row=9, column=2)
 compare_button = Button(main_window, text="Compare Results (Graph)", command=compare_graph)
 compare_button.grid(row=10, column=1, pady=10)
 
-# New stock function
+# New botton stock delay 15 min stock
 label_stock = Label(main_window, text="Stock Name:")
 label_stock.grid(row=11, column=0, padx=10, pady=10)
 
@@ -175,5 +214,10 @@ announcement_button.grid(row=13, column=0, columnspan=2, pady=10)
 
 result_text = Text(main_window, height=10, width=40)
 result_text.grid(row=14, column=0, columnspan=2, pady=10)
+
+# New botton for stock chart
+
+plot_button = ttk.Button(main_window, text="Plot Stock Chart", command=plot_stock_chart)
+plot_button.grid(row=15, column=0, columnspan=2, pady=10)
 
 main_window.mainloop()
